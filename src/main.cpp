@@ -1909,9 +1909,42 @@
 #include <WiFiUDP.h>
 #include <string.h>
 
-#include "BF_AquesTalkPicoSerial.h"
-#include "BF_M5AdcWave.h"
+#include "aqtk/BF_AquesTalkPicoSerial.h"
+#include "aqtk/BF_M5AdcWave.h"
 
+// Setup WiFi
+const char *WIFI_PASS = "ushiushi"; // WiFi Password
+
+const char *SSID = "WonderDevice-Tplink";    // WiFi ssid
+const IPAddress IP(192, 168, 1, 160);
+const IPAddress GATEWAY(192, 168, 1, 1);
+const IPAddress DNS(192, 168, 1, 1);
+
+// const char *SSID = "GL-MT300N-V2-8a3";    // WiFi ssid
+// const IPAddress IP(192, 168, 8, 160);
+// const IPAddress GATEWAY(192, 168, 8, 1);
+// const IPAddress DNS(192, 168, 8, 1);
+
+const IPAddress NETMASK(255, 255, 255, 0);
+String s;
+const int port = 50100; // port
+WiFiUDP udp;
+
+char packetBuffer[4096];
+
+String UDPrecv(void) {
+    int packetSize = udp.parsePacket();
+    if (packetSize)
+    {
+      int len = udp.read(packetBuffer, packetSize);
+      if (len > 0)
+      {
+        packetBuffer[len] = '\0'; // end
+      }
+      s = packetBuffer;
+    }
+    return s;
+}
 
 AquesTalkPicoSerial aqtp;
 
@@ -1983,6 +2016,48 @@ void setup() {
     Disbuff.drawJpg(CoreMainImage, 87169, 0, 0, 320, 240, 0, 0);
     Disbuff.pushSprite(0, 0);
 
+    // Serial2 interface defined by Arduino-ESP32
+    const int serial2_rx(13);  // GPIO16 as default
+    const int serial2_tx(14);  // GPIO17 as default
+    Serial2.begin(9600, SERIAL_8N1, serial2_rx, serial2_tx);
+    while (!Serial2) {
+    Serial.println("[AquesTalk LSI] Waiting Serial2");
+    delay(100);
+    }
+    aqtp.Begin(Serial2);
+
+    // "true" to set serial-speed into EEPROM of ATP3012
+    if (/*true*/ false) {
+        aqtp.WriteSerialSpeed(38400);
+        for (int i = 0; i < 10; ++i) {
+            aqtp.ShowRes();
+            delay(200);
+        }
+    }
+
+    aqtp.Send("#V\r");  // read version
+    for (int i = 0; i < 10; ++i) {
+    aqtp.ShowRes();
+    delay(200);
+    }
+    aqtp.Send("#J\r");  // chime sound J
+    for (int i = 0; i < 10; ++i) {
+        aqtp.ShowRes();
+        delay(200);
+    }
+    aqtp.Send("#K\r");  // chime sound K
+    for (int i = 0; i < 10; ++i) {
+        aqtp.ShowRes();
+        delay(200);
+    }
+
+    aqtp.Send("wo-ri-o-e'suo/kido-shima'_shita.\r");
+    for (int i = 0; i < 20; ++i) {
+        aqtp.ShowRes();
+        delay(200);
+    }
+    aqtp.Send("nandemo'hanashi'kaketekudasa'i.\r");
+
     setup3D();
     clockSetup();
     powerSetup();
@@ -1991,12 +2066,59 @@ void setup() {
     touchsetup();
     sdcardSetup();
     choosePower();
+
+
+
+    // Wi-Fiモジュールの開始
+    WiFi.disconnect(true, true); // WiFi OFF, eraseAP=true
+    delay(500);
+
+    if (!WiFi.config(IP, GATEWAY, NETMASK, DNS)) {
+        Serial.println("Failed to configure!");
+    }
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, WIFI_PASS);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+    }  
+    udp.begin(port);
+
+
 }
 
 uint16_t imageCount = 0;
 uint16_t timecount  = 0;
 
-void loop() {
+void loop() 
+{
+    int startTime = millis(); // 開始時刻を記録 
+
+    char RecvMsg[1024];
+    memset(RecvMsg, 0, sizeof(RecvMsg));
+
+    s = UDPrecv();
+    int str_len = s.length();
+    if ( str_len > 0) {
+        const char *str = s.c_str();
+        // Serial.printf("RAW UDP-msg: %s (len=%d)", str, strlen(str));
+    
+        if (str_len<127){
+        strncpy(RecvMsg, str, str_len);
+        }else{
+        Serial.printf("[msg size is over 127]!!!! ---> len=%d\n", str_len);
+        strncpy(RecvMsg, str, 127-10);
+        strcat(RecvMsg, ". arere.\0");    
+        }
+        Serial.printf("Revised UDP-msg(len=%d): %s \n", strlen(RecvMsg), RecvMsg);
+
+        int endTime = millis(); // 終了時刻を記録する
+        Serial.printf("UDP recv time: %d\n", endTime - startTime); // 経過時間を出力
+
+        strcat(RecvMsg, "\r");
+        aqtp.Send(RecvMsg);
+        s.clear();
+    }
+
     if (timecount >= 2) {
         timecount = 0;
         clockFlush();
