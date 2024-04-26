@@ -2051,12 +2051,14 @@ void setup() {
         delay(200);
     }
 
-    aqtp.Send("wo-ri-o-e'suo/kido-shima'_shita.\r");
+    // aqtp.Send("wo-ri-o-e'suo/kido-shima'_shita.\r");
+    aqtp.Send("wo-ri-o-e'suga/kido-shihari'mashitaee.\r");
     for (int i = 0; i < 20; ++i) {
         aqtp.ShowRes();
         delay(200);
     }
-    aqtp.Send("nandemo'hanashi'kaketekudasa'i.\r");
+    // aqtp.Send("nandemo'hanashi'kaketekudasa'i.\r");
+    aqtp.Send("donaina'kotodemo'hanashi'tatte'ya.\r");
 
     setup3D();
     clockSetup();
