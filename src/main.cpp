@@ -1915,15 +1915,15 @@
 // Setup WiFi
 const char *WIFI_PASS = "ushiushi"; // WiFi Password
 
-const char *SSID = "WonderDevice-Tplink";    // WiFi ssid
-const IPAddress IP(192, 168, 1, 160);
-const IPAddress GATEWAY(192, 168, 1, 1);
-const IPAddress DNS(192, 168, 1, 1);
+// const char *SSID = "WonderDevice-Tplink";    // WiFi ssid
+// const IPAddress IP(192, 168, 1, 160);
+// const IPAddress GATEWAY(192, 168, 1, 1);
+// const IPAddress DNS(192, 168, 1, 1);
 
-// const char *SSID = "GL-MT300N-V2-8a3";    // WiFi ssid
-// const IPAddress IP(192, 168, 8, 160);
-// const IPAddress GATEWAY(192, 168, 8, 1);
-// const IPAddress DNS(192, 168, 8, 1);
+const char *SSID = "GL-MT300N-V2-8a3";    // WiFi ssid
+const IPAddress IP(192, 168, 8, 160);
+const IPAddress GATEWAY(192, 168, 8, 1);
+const IPAddress DNS(192, 168, 8, 1);
 
 const IPAddress NETMASK(255, 255, 255, 0);
 String s;
@@ -2105,11 +2105,11 @@ void loop()
         // Serial.printf("RAW UDP-msg: %s (len=%d)", str, strlen(str));
     
         if (str_len<127){
-        strncpy(RecvMsg, str, str_len);
+            strncpy(RecvMsg, str, str_len);
         }else{
-        Serial.printf("[msg size is over 127]!!!! ---> len=%d\n", str_len);
-        strncpy(RecvMsg, str, 127-10);
-        strcat(RecvMsg, ". arere.\0");    
+            Serial.printf("[msg size is over 127]!!!! ---> len=%d\n", str_len);
+            strncpy(RecvMsg, str, 127-10);
+            strcat(RecvMsg, ". arere.\0");    
         }
         Serial.printf("Revised UDP-msg(len=%d): %s \n", strlen(RecvMsg), RecvMsg);
 
